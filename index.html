@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>好きマップ</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #121933;
+    --panel-2: #182242;
+    --text: #eef3ff;
+    --sub: #a9b5d6;
+    --accent: #59d0c2;
+    --accent-2: #7aa2ff;
+    --warn: #ffd36b;
+    --border: rgba(255,255,255,0.08);
+    --shadow: 0 12px 32px rgba(0,0,0,0.28);
+    --radius: 22px;
+    --body-bg:
+      radial-gradient(circle at top left, rgba(89,208,194,0.14), transparent 28%),
+      radial-gradient(circle at top right, rgba(122,162,255,0.14), transparent 22%),
+      linear-gradient(180deg, #0a0f1d 0%, #0b1020 100%);
+    --nav-bg: rgba(11,16,32,0.88);
+    --tag-bg: linear-gradient(135deg, rgba(122,162,255,0.16), rgba(89,208,194,0.12));
+    --tag-text: #dfe8ff;
+    --tag-border: rgba(122,162,255,0.2);
+    --world-comment-bg: rgba(89,208,194,0.05);
+    --surface-soft: rgba(255,255,255,0.06);
+    --surface-strong: rgba(255,255,255,0.10);
+  }
+
+  body[data-theme="girly"] {
+    --bg: #fff7fb;
+    --panel: #fff8fd;
+    --panel-2: #fff3fb;
+    --text: #4d3550;
+    --sub: #887283;
+    --accent: #f374e8;
+    --accent-2: #ff88ff;
+    --warn: #ff6bbc;
+    --border: rgba(214,155,196,0.26);
+    --shadow: 0 14px 36px rgba(255, 212, 242, 0.829);
+    --body-bg:
+      radial-gradient(circle at top left, rgba(255,175,214,0.34), transparent 28%),
+      radial-gradient(circle at top right, rgba(175,192,255,0.28), transparent 24%),
+      linear-gradient(180deg, #fff8fc 0%, #fff3fb 100%);
+    --nav-bg: rgba(255,246,252,0.84);
+    --tag-bg: linear-gradient(135deg, rgba(255,175,214,0.22), rgba(175,192,255,0.18));
+    --tag-text: #7b4b6b;
+    --tag-border: rgba(245, 207, 233, 0.822);
+    --world-comment-bg: rgba(253, 212, 232, 0.87);
+    --surface-soft: rgba(255,255,255,0.72);
+    --surface-strong: rgba(255,255,255,0.88);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    background: var(--body-bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.35s ease, color 0.25s ease;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center; gap: 0;
+  }
+
+  .nav-logo {
+    font-size: 17px; font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 40%, transparent);
+    padding: 14px 20px 14px 0;
+    border-right: 1px solid var(--border);
+    margin-right: 12px;
+    white-space: nowrap;
+  }
+
+  .tabs { display: flex; gap: 6px; flex: 1; padding: 10px 0; flex-wrap: wrap; }
+
+  .tab-btn {
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .tab-btn.active, .tab-btn:hover {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent-2) 18%, transparent));
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .nav-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent);
+    border-radius: 10px;
+    font-size: 11px;
+    min-width: 20px; height: 18px;
+    padding: 0 5px; margin-left: 5px;
+  }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .panel {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, transparent), color-mix(in srgb, var(--panel-2) 92%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent-2) 14%, transparent);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,0.02), 0 0 40px color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 22px;
+    backdrop-filter: blur(8px);
+    margin-bottom: 20px;
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; }
+  .grid2-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .grid2, .grid2-equal { grid-template-columns: 1fr; } }
+
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+    border: 1px solid color-mix(in srgb, var(--accent-2) 12%, transparent);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: inset 0 0 18px color-mix(in srgb, var(--accent-2) 6%, transparent), 0 0 28px color-mix(in srgb, var(--accent) 6%, transparent);
+    position: relative; overflow: hidden;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 35%, color-mix(in srgb, var(--accent-2) 8%, transparent));
+    pointer-events: none;
+  }
+
+  .card h3 {
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 16px;
+    position: relative; z-index: 1;
+  }
+
+  .section-title {
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.12em;
+    color: color-mix(in srgb, var(--sub) 75%, transparent);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    position: relative; z-index: 1;
+  }
+
+  .theme-switcher {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .theme-btn {
+    flex: 1;
+    min-width: 180px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    border-radius: 16px;
+    padding: 14px 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+
+  .theme-btn strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+
+  .theme-btn span {
+    font-size: 12px;
+    color: var(--sub);
+  }
+
+  .theme-btn.active,
+  .theme-btn:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--accent-2) 12%, transparent));
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 12%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .input-group { margin-bottom: 16px; position: relative; z-index: 1; }
+
+  .input-label {
+    display: block;
+    font-size: 13px; font-weight: 600;
+    color: var(--sub); margin-bottom: 7px;
+  }
+
+  input[type=text] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-family: inherit; font-size: 14px;
+    outline: none; transition: 0.2s;
+  }
+
+  input[type=text]::placeholder { color: color-mix(in srgb, var(--sub) 58%, transparent); }
+
+  input[type=text]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+
+  select {
+  width: 100%;
+  padding: 12px 40px 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 15%, transparent), color-mix(in srgb, var(--accent) 12%, transparent));
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--accent-2) 40%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent-2) 20%, transparent), inset 0 0 8px rgba(255,255,255,0.04);
+  backdrop-filter: blur(6px);
+  font-family: inherit; font-size: 14px;
+  outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+      linear-gradient(135deg, var(--accent) 50%, transparent 50%),
+      linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 15%, transparent), color-mix(in srgb, var(--accent) 12%, transparent));
+    background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px), 0 0;
+    background-size: 6px 6px, 6px 6px, 100% 100%;
+    background-repeat: no-repeat;
+    transition: 0.2s;
+  }
+
+  select:hover {
+    border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 32px color-mix(in srgb, var(--accent-2) 15%, transparent);
+  }
+
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 20px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  select option { background: var(--panel); color: var(--text); }
+
+  .slider-wrap { display: flex; align-items: center; gap: 14px; }
+
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 5px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px; outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-radius: 50%; cursor: pointer;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
+    transition: transform 0.15s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .like-badge {
+    min-width: 54px; text-align: center;
+    padding: 9px 12px; border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: color-mix(in srgb, var(--text) 95%, transparent);
+    font-weight: 700; font-size: 15px;
+  }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1; }
+
+button {
+  border: none;
+  border-radius: 14px;
+  padding: 11px 18px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+  font-size: 13px;
+  transition: 0.2s ease;
+}
+
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #071018; }
+  .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: rgba(239,68,68,0.1); color: rgba(239,100,100,0.9); border: 1px solid rgba(239,68,68,0.25); }
+  .btn-small { padding: 5px 11px; font-size: 12px; border-radius: 10px; }
+
+  button:hover { transform: translateY(-1px); filter: brightness(1.08); }
+
+  .recent-list { display: grid; gap: 10px; position: relative; z-index: 1; }
+
+  .recent-item {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  .item-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.035);
+    padding: 13px 15px;
+    display: flex; align-items: center; gap: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .item-card:hover { border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .item-card + .item-card { margin-top: 8px; }
+  .item-name { font-weight: 700; font-size: 14px; flex: 1; }
+  .stars { color: var(--warn); letter-spacing: 2px; font-size: 13px; white-space: nowrap; }
+
+  .tag {
+    padding: 5px 10px; border-radius: 999px;
+    background: var(--tag-bg);
+    color: var(--tag-text); font-size: 12px;
+    border: 1px solid var(--tag-border);
+  }
+
+  .tag.ambiguous {
+    background: linear-gradient(135deg, rgba(255,211,107,0.16), rgba(255,166,0,0.12));
+    border-color: rgba(255,211,107,0.25); color: #fff1c7;
+  }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .search-wrap { flex: 1; min-width: 200px; position: relative; }
+  .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: color-mix(in srgb, var(--sub) 65%, transparent); font-size: 14px; pointer-events: none; }
+  .search-wrap input[type=text] { padding-left: 36px; }
+  .list-meta { font-size: 13px; color: var(--sub); }
+
+  .sort-btn {
+    padding: 8px 13px; border-radius: 10px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--sub); background: transparent; font-family: inherit;
+    transition: 0.15s;
+  }
+
+  .sort-btn.active, .sort-btn:hover {
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    transform: none; filter: none;
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px; text-align: center;
+  }
+
+  .stat-val {
+    font-size: 34px; font-weight: 800;
+    color: var(--accent);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .stat-label { font-size: 12px; color: var(--sub); margin-top: 4px; }
+
+  .cat-bar { margin-bottom: 12px; }
+  .cat-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+  .cat-bar-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .cat-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.6s ease; }
+
+  #network-canvas {
+    width: 100%;
+    height: 400px;
+    display: block;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface-soft);
+  }
+
+  .world-comment {
+    font-size: 15px; line-height: 1.9;
+    color: var(--text);
+    padding: 16px 18px;
+    background: var(--world-comment-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    position: relative; z-index: 1;
+  }
+
+  .report-section { margin-bottom: 18px; }
+  .report-label {
+    font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--sub) 75%, transparent);
+    margin-bottom: 6px; font-weight: 600;
+  }
+  .report-content { font-size: 14px; line-height: 1.85; color: var(--sub); }
+  .kw-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .kw {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 15%, transparent), color-mix(in srgb, var(--accent-2) 10%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .copy-box {
+    width: 100%;
+    min-height: 160px;
+    background: var(--surface-strong);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.85;
+    padding: 14px 16px;
+    resize: vertical;
+    outline: none;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--sub); font-size: 14px; line-height: 1.8; }
+
+  #toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: color-mix(in srgb, var(--panel) 95%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 14px; padding: 11px 20px;
+    font-size: 13px; font-weight: 600; color: var(--accent);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    z-index: 200; backdrop-filter: blur(20px);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">好きマップ</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showScreen('register', this)">1. 登録</button>
+    <button class="tab-btn" onclick="showScreen('list', this)">2. 一覧 <span class="nav-count" id="list-count">0</span></button>
+    <button class="tab-btn" onclick="showScreen('world', this)">3. 世界観</button>
+    <button class="tab-btn" onclick="showScreen('report', this)">4. 自己分析</button>
+  </div>
+</nav>
+
+<div id="toast"></div>
+
+<main>
+
+  <div id="screen-register" class="screen active">
+    <div class="panel">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-title">テーマ切り替え</div>
+        <div class="theme-switcher">
+          <button class="theme-btn active" id="theme-default-btn" onclick="setTheme('default')">
+            <strong>ダーク</strong>
+            <span>静かなブルーグリーンな近未来感</span>
+          </button>
+          <button class="theme-btn" id="theme-girly-btn" onclick="setTheme('girly')">
+            <strong>ライト</strong>
+            <span>やわらかいピンクの近未来感</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>好きなものを入れてください</h3>
+
+          <div class="input-group">
+            <label class="input-label">名前</label>
+            <input type="text" id="inp-name" placeholder="例：ギター、美顔器、写真、旅行">
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">好き度</label>
+            <div class="slider-wrap">
+              <input type="range" id="inp-like" min="1" max="5" value="3" step="1">
+              <div class="like-badge" id="like-val">3 / 5</div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">この好きは何に近い？（任意）</label>
+            <select id="inp-hint">
+              <option value="auto">自動判定</option>
+              <option value="人">人</option>
+              <option value="見た目">見た目</option>
+              <option value="モノ">モノ</option>
+              <option value="学問">学問</option>
+              <option value="場所">場所</option>
+              <option value="趣味">趣味</option>
+              <option value="概念">概念</option>
+            </select>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-primary" onclick="addItem()">追加</button>
+            <button class="btn-secondary" onclick="addSamples()">サンプルを入れる</button>
+            <button class="btn-danger" onclick="clearAll()">全消去</button>
+          </div>
+        </div>
+
+        <div class="card" id="recent-card" style="display:none">
+          <h3>最近追加したもの</h3>
+          <div class="recent-list" id="recent-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-list" class="screen">
+    <div class="panel">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="search-inp" placeholder="検索…" oninput="renderList()">
+        </div>
+        <button class="sort-btn active" id="sort-date" onclick="setSort('date')">新着順</button>
+        <button class="sort-btn" id="sort-like" onclick="setSort('like')">好き度順</button>
+        <button class="sort-btn" id="sort-name" onclick="setSort('name')">名前順</button>
+        <span class="list-meta" id="list-meta"></span>
+      </div>
+      <div id="item-list"></div>
+    </div>
+  </div>
+
+  <div id="screen-world" class="screen">
+    <div class="panel">
+      <div class="grid2-equal" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-val" id="w-total">0</div>
+          <div class="stat-label">登録した好き</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="font-size:22px" id="w-top-cat">—</div>
+          <div class="stat-label">最多カテゴリ</div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-title">カテゴリ分布</div>
+          <div id="cat-bars"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">あなたの世界観</div>
+          <div class="world-comment" id="world-comment">登録を増やすと世界観コメントが生成されます。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">好きのネットワーク</div>
+        <canvas id="network-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-report" class="screen">
+    <div class="panel">
+      <div id="report-empty" class="empty">好きなものを5つ以上登録すると<br>自己分析レポートが生成されます</div>
+      <div id="report-content" style="display:none">
+
+        <div class="grid2-equal" style="margin-bottom:20px">
+          <div class="stat-card">
+            <div class="stat-val" style="font-size:18px" id="rep-strength"></div>
+            <div class="stat-label">あなたの強み候補</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" style="font-size:18px" id="rep-role"></div>
+            <div class="stat-label">向いていそうな役割</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="report-section">
+              <div class="report-label">好きの傾向</div>
+              <div class="report-content" id="rep-tendency"></div>
+            </div>
+            <div class="divider"></div>
+            <div class="report-section">
+              <div class="report-label">向いていそうな環境</div>
+              <div class="report-content" id="rep-env"></div>
+            </div>
+            <div class="divider"></div>
+            <div class="report-section">
+              <div class="report-label">自己PRの軸</div>
+              <div class="report-content" id="rep-pr"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div class="report-label" style="margin-bottom:10px">就活キーワード</div>
+              <div class="kw-list" id="rep-keywords"></div>
+            </div>
+            <div class="card" style="flex:1">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <div class="report-label" style="margin:0">コピペ用自己PR</div>
+                <button class="btn-secondary btn-small" onclick="copyReport()">コピー</button>
+              </div>
+              <textarea class="copy-box" id="rep-copy" readonly></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const STORAGE_KEY = 'suki_world_map_v4';
+const THEME_KEY = 'suki_world_theme_v1';
+
+const CAT_COLORS = {
+  '趣味':  { fill:'rgba(89,208,194,0.18)',  border:'rgba(89,208,194,0.5)',  text:'#59d0c2', bar:'#59d0c2' },
+  '見た目':{ fill:'rgba(168,85,247,0.18)',  border:'rgba(168,85,247,0.5)',  text:'#c084fc', bar:'#c084fc' },
+  'モノ':  { fill:'rgba(122,162,255,0.18)', border:'rgba(122,162,255,0.5)', text:'#7aa2ff', bar:'#7aa2ff' },
+  '学問':  { fill:'rgba(249,115,22,0.18)',  border:'rgba(249,115,22,0.5)',  text:'#f97316', bar:'#f97316' },
+  '場所':  { fill:'rgba(34,197,94,0.18)',   border:'rgba(34,197,94,0.5)',   text:'#22c55e', bar:'#22c55e' },
+  '人':    { fill:'rgba(244,114,182,0.18)', border:'rgba(244,114,182,0.5)', text:'#f472b6', bar:'#f472b6' },
+  '概念':  { fill:'rgba(148,163,184,0.18)', border:'rgba(148,163,184,0.5)', text:'#94a3b8', bar:'#94a3b8' },
+};
+
+const ALLOWED_CATEGORIES = ['人', '見た目', 'モノ', '学問', '場所', '趣味', '概念'];
+
+let data = [];
+let sortMode = 'date';
+let currentTheme = 'default';
+
+function load() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) data = JSON.parse(d);
+  } catch(e) {
+    data = [];
+  }
+
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  currentTheme = savedTheme === 'girly' ? 'girly' : 'default';
+  applyTheme(currentTheme);
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function applyTheme(theme) {
+  document.body.setAttribute('data-theme', theme === 'girly' ? 'girly' : 'default');
+  document.getElementById('theme-default-btn').classList.toggle('active', theme !== 'girly');
+  document.getElementById('theme-girly-btn').classList.toggle('active', theme === 'girly');
+}
+
+function setTheme(theme) {
+  currentTheme = theme === 'girly' ? 'girly' : 'default';
+  localStorage.setItem(THEME_KEY, currentTheme);
+  applyTheme(currentTheme);
+  showToast(currentTheme === 'girly' ? 'フレンチガーリー×近未来に切り替えました' : '今のテーマに切り替えました');
+}
+
+function classify(name, hint) {
+  if (hint !== 'auto') return { target: hint, ambiguous: false };
+  const n = name.toLowerCase();
+  const rules = [
+    ['趣味', ['ギター','ベース','ドラム','ピアノ','音楽','カラオケ','写真','読書','ゲーム','マンガ','アニメ','映画','料理','絵','ダンス','水泳','テニス','サッカー','野球']],
+    ['見た目', ['美容','肌','メイク','髪','カット','黒髪','金髪','ウルフカット','ファッション','コスメ','ネイル','香水']],
+    ['モノ', ['美顔器','カメラ','時計','車','バイク','pc','スマホ','ガジェット','財布','バッグ','文具']],
+    ['学問', ['医療','生体','皮膚','数学','物理','化学','研究','大学','資格','web開発','開発','プログラミング','ai','心理','経済','法律','哲学','歴史','生物','天文']],
+    ['場所', ['旅行','カフェ','神社','海外','ホテル','温泉','山','海','図書館','美術館','公園']],
+    ['人', ['優しい','高身長','低音','メガネ','塩顔','犬系','猫系','年上','年下','俳優','アイドル','推し']],
+  ];
+  const ambiguousWords = ['ウルフカット','黒髪','メガネ'];
+  const isAmbiguous = ambiguousWords.some(w => name.includes(w));
+  for (const [cat, words] of rules) {
+    if (words.some(w => n.includes(w.toLowerCase()))) return { target: cat, ambiguous: isAmbiguous };
+  }
+  return { target: '概念', ambiguous: false };
+}
+
+function addItem() {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) {
+    showToast('名前を入力してください');
+    return;
+  }
+
+  const like = parseInt(document.getElementById('inp-like').value, 10);
+  const hint = document.getElementById('inp-hint').value;
+  const { target, ambiguous } = classify(name, hint);
+
+  data.unshift({
+    id: Date.now().toString() + Math.random().toString(16).slice(2),
+    name,
+    like,
+    target,
+    ambiguous,
+    createdAt: new Date().toISOString()
+  });
+
+  save();
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-hint').value = 'auto';
+  document.getElementById('inp-like').value = 3;
+  document.getElementById('like-val').textContent = '3 / 5';
+  updateAll();
+  showToast(`「${name}」を追加しました`);
+}
+
+function addSamples() {
+  const samples = [
+    ['ギター',5,'auto'],['カフェ',4,'auto'],['AI',5,'auto'],['旅行',4,'auto'],
+    ['読書',3,'auto'],['料理',3,'auto'],['優しい人',5,'auto'],['デザイン',4,'概念'],
+    ['数学',3,'auto'],['猫系',4,'auto'],['ウルフカット',4,'auto'],['美術館',3,'auto'],
+  ];
+
+  samples.forEach(([name, like, hint]) => {
+    const { target, ambiguous } = classify(name, hint);
+    data.unshift({
+      id: Date.now().toString() + Math.random().toString(16).slice(2),
+      name,
+      like,
+      target,
+      ambiguous,
+      createdAt: new Date().toISOString()
+    });
+  });
+
+  save();
+  updateAll();
+  showToast('サンプルを追加しました');
+}
+
+function clearAll() {
+  if (!confirm('全て削除しますか？')) return;
+  data = [];
+  save();
+  updateAll();
+  showToast('全消去しました');
+}
+
+function deleteItem(id) {
+  data = data.filter(d => d.id !== id);
+  save();
+  updateAll();
+}
+
+function editCategory(id) {
+  const item = data.find(d => d.id === id);
+  if (!item) return;
+
+  const input = prompt(
+    `「${item.name}」の分類を変更\n\n` +
+    `入力できる分類:\n` +
+    `人 / 見た目 / モノ / 学問 / 場所 / 趣味 / 概念\n\n` +
+    `現在: ${item.target}`,
+    item.target
+  );
+
+  if (input === null) return;
+
+  const next = input.trim();
+  if (!ALLOWED_CATEGORIES.includes(next)) {
+    showToast('分類名が正しくありません');
+    return;
+  }
+
+  data = data.map(d =>
+    d.id === id
+      ? { ...d, target: next, ambiguous: false }
+      : d
+  );
+
+  save();
+  updateAll();
+  showToast(`「${item.name}」の分類を変更しました`);
+}
+
+function renderRecent() {
+  const card = document.getElementById('recent-card');
+  const list = document.getElementById('recent-list');
+  const recent = data.slice(0, 5);
+
+  if (recent.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  list.innerHTML = recent.map(item => {
+    const c = CAT_COLORS[item.target] || CAT_COLORS['概念'];
+    const stars = '★'.repeat(item.like) + '☆'.repeat(5 - item.like);
+    return `<div class="recent-item">
+      <div class="dot"></div>
+      <span style="flex:1;font-size:14px;font-weight:600">${item.name}</span>
+      <span style="color:var(--warn);font-size:12px;letter-spacing:1px">${stars}</span>
+      <span class="tag"
+            style="background:${c.fill};border-color:${c.border};color:${c.text};cursor:pointer"
+            onclick="editCategory('${item.id}')"
+            title="クリックで分類変更">${item.target}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderList() {
+  const query = document.getElementById('search-inp').value.toLowerCase();
+  let items = data.filter(d =>
+    d.name.toLowerCase().includes(query) ||
+    d.target.toLowerCase().includes(query)
+  );
+
+  if (sortMode === 'like') items.sort((a,b) => b.like - a.like || new Date(b.createdAt) - new Date(a.createdAt));
+  else if (sortMode === 'name') items.sort((a,b) => a.name.localeCompare(b.name, 'ja'));
+  else items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  document.getElementById('list-meta').textContent = `${items.length} 件`;
+  const container = document.getElementById('item-list');
+
+  if (items.length === 0) {
+    container.innerHTML = `<div class="empty">登録がありません</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const c = CAT_COLORS[item.target] || CAT_COLORS['概念'];
+    const stars = '★'.repeat(item.like) + '☆'.repeat(5 - item.like);
+    const ambTag = item.ambiguous ? `<span class="tag ambiguous">曖昧</span>` : '';
+
+    return `<div class="item-card">
+      <span class="item-name">${item.name}</span>
+      <span class="stars">${stars}</span>
+
+      <select
+        onchange="changeCategory('${item.id}', this.value)"
+        style="
+          padding: 5px 28px 5px 10px;
+          border-radius: 999px;
+          border: 1px solid ${c.border};
+          background: ${c.fill};
+          color: ${c.text};
+          font-size: 12px;
+          font-family: inherit;
+          cursor: pointer;
+          outline: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          background-image:
+            linear-gradient(45deg, transparent 50%, ${c.text} 50%),
+            linear-gradient(135deg, ${c.text} 50%, transparent 50%);
+          background-position:
+            calc(100% - 14px) calc(50% - 2px),
+            calc(100% - 9px) calc(50% - 2px);
+          background-size: 5px 5px, 5px 5px;
+          background-repeat: no-repeat;
+        "
+      >
+        ${ALLOWED_CATEGORIES.map(cat => `
+          <option value="${cat}" ${cat === item.target ? 'selected' : ''}>${cat}</option>
+        `).join('')}
+      </select>
+
+      ${ambTag}
+
+      <button onclick="deleteItem('${item.id}')" style="background:none;border:none;color:rgba(169,181,214,0.35);cursor:pointer;font-size:18px;line-height:1;padding:0 3px;border-radius:6px;transition:0.15s" onmouseover="this.style.color='rgba(239,100,100,0.8)'" onmouseout="this.style.color='rgba(169,181,214,0.35)'">×</button>
+    </div>`;
+  }).join('');
+}
+
+function setSort(mode) {
+  sortMode = mode;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort-' + mode).classList.add('active');
+  renderList();
+}
+
+function getCatCounts() {
+  const counts = {};
+  data.forEach(d => { counts[d.target] = (counts[d.target] || 0) + 1; });
+  return counts;
+}
+
+function renderWorld() {
+  document.getElementById('w-total').textContent = data.length;
+  const counts = getCatCounts();
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('w-top-cat').textContent = sorted[0]?.[0] || '—';
+
+  const total = data.length || 1;
+  document.getElementById('cat-bars').innerHTML = sorted.map(([cat, cnt]) => {
+    const c = CAT_COLORS[cat] || CAT_COLORS['概念'];
+    const pct = Math.round(cnt / total * 100);
+    return `<div class="cat-bar">
+      <div class="cat-bar-label">
+        <span style="color:var(--text)">${cat}</span>
+        <span style="color:var(--sub)">${cnt}個 (${pct}%)</span>
+      </div>
+      <div class="cat-bar-track">
+        <div class="cat-bar-fill" style="width:${pct}%;background:${c.bar}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  drawNetwork();
+  document.getElementById('world-comment').textContent = generateWorldComment(sorted);
+}
+
+function drawNetwork() {
+  const canvas = document.getElementById('network-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth;
+  const H = 400;
+
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.clearRect(0,0,W,H);
+
+  if (data.length === 0) {
+    ctx.fillStyle = 'rgba(169,181,214,0.35)';
+    ctx.font = '14px Segoe UI, Hiragino Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('好きを追加するとネットワーク図が表示されます', W/2, H/2);
+    return;
+  }
+
+  const groups = {};
+  data.forEach(d => {
+    if (!groups[d.target]) groups[d.target] = [];
+    groups[d.target].push(d);
+  });
+
+  const cats = Object.keys(groups);
+  const nodes = [];
+
+  cats.forEach((cat, ci) => {
+    const angle = (ci / cats.length) * Math.PI * 2 - Math.PI / 2;
+    const cx = W/2 + Math.cos(angle) * (Math.min(W,H) * 0.28);
+    const cy = H/2 + Math.sin(angle) * (Math.min(W,H) * 0.28);
+
+    groups[cat].forEach((item, ii) => {
+      const a2 = (ii / groups[cat].length) * Math.PI * 2;
+      const r = 30 + groups[cat].length * 8;
+      nodes.push({
+        x: cx + Math.cos(a2) * r * 0.5,
+        y: cy + Math.sin(a2) * r * 0.5,
+        item,
+        cat
+      });
+    });
+  });
+
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      if (nodes[i].cat === nodes[j].cat) {
+        const c = CAT_COLORS[nodes[i].cat] || CAT_COLORS['概念'];
+        ctx.beginPath();
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(nodes[j].x, nodes[j].y);
+        ctx.strokeStyle = c.border;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    }
+  }
+
+  nodes.forEach(n => {
+    const r = 6 + n.item.like * 2.8;
+    const c = CAT_COLORS[n.cat] || CAT_COLORS['概念'];
+    const fill = n.item.ambiguous ? 'rgba(255,211,107,0.22)' : c.fill;
+    const stroke = n.item.ambiguous ? '#ffd36b' : c.text;
+
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    if (n.item.like >= 4) {
+      ctx.fillStyle = currentTheme === 'girly' ? 'rgba(95,64,95,0.82)' : 'rgba(238,243,255,0.82)';
+      ctx.font = '12px Segoe UI, Hiragino Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.item.name, n.x, n.y - r - 5);
+    }
+  });
+}
+
+function generateWorldComment(sorted) {
+  if (data.length < 3) return '登録が少なすぎます。まず好きなものを追加してみてください。';
+
+  const top = sorted.slice(0,3).map(([c]) => c);
+  const descriptions = {
+    '趣味':'表現や体験を通じて世界を楽しむ感覚が豊か',
+    '見た目':'美意識や感性が高く、視覚的な美しさに敏感',
+    'モノ':'道具や設計への関心が強く、機能美を見出す',
+    '学問':'知識や探究心が原動力になっている',
+    '場所':'空間や環境から多くのインスピレーションを受ける',
+    '人':'人との関係や感情に深く共鳴する',
+    '概念':'抽象的な価値観や意味に強く引かれる',
+  };
+  const descs = top.map(c => descriptions[c]).filter(Boolean);
+  const avg = data.reduce((s,d) => s + d.like, 0) / data.length;
+  const intensity = avg >= 4 ? '強烈な情熱' : avg >= 3 ? 'バランスの取れた愛着' : 'まだ発展途上の好奇心';
+
+  return `あなたの好きは「${top.join('・')}」を中心に広がっています。${descs.join('、')}という傾向が見られます。全体的に${intensity}を感じる世界観です。`;
+}
+
+function renderReport() {
+  const empty = document.getElementById('report-empty');
+  const content = document.getElementById('report-content');
+
+  if (data.length < 5) {
+    empty.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  content.style.display = 'block';
+
+  const counts = getCatCounts();
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const top1 = sorted[0]?.[0];
+  const top2 = sorted[1]?.[0];
+  const avg = data.reduce((s,d)=>s+d.like,0)/data.length;
+  const topItems = [...data].sort((a,b)=>b.like-a.like).slice(0,3).map(d=>d.name);
+
+  const strengthMap = {'趣味':'表現力・創造性','見た目':'審美眼・センス','モノ':'分析力・実装力','学問':'探究心・論理思考','場所':'行動力・適応力','人':'共感力・対人力','概念':'洞察力・思想力'};
+  const roleMap = {'趣味':'クリエイター','見た目':'デザイナー','モノ':'エンジニア','学問':'リサーチャー','場所':'フィールドワーカー','人':'コミュニケーター','概念':'ストラテジスト'};
+  const envMap = {'趣味':'自己表現を奨励する文化がある環境・クリエイティブな職場','見た目':'美的感覚を活かせる場所・ブランドや空間に関わる仕事','モノ':'プロダクトやシステムを作る環境・エンジニアリング系の職場','学問':'専門知識を深められる環境・研究や教育に関わる仕事','場所':'フィールドが多様で動き回れる環境・出張や移動のある仕事','人':'チームワークや対話が多い環境・人と関わる仕事','概念':'戦略や企画を考える環境・抽象思考を活かせる仕事'};
+  const prMap = {'趣味':'「好きなことを極める力」と「それを形にする表現力」','見た目':'「細部への注意力」と「ユーザー視点での美意識」','モノ':'「仕組みを理解し改善する思考力」と「実装へのこだわり」','学問':'「問いを立て、深く学ぶ探究心」と「知識の体系化」','場所':'「新しい環境への適応力」と「行動することへの抵抗のなさ」','人':'「相手を理解する共感力」と「関係構築の自然さ」','概念':'「本質を見抜く洞察力」と「抽象を言語化する思考力」'};
+  const kwBase = {'趣味':['創造性','表現力','継続力','熱量'],'見た目':['審美眼','ユーザー視点','センス','品質へのこだわり'],'モノ':['分析力','課題解決','実装力','精緻さ'],'学問':['探究心','論理思考','専門性','学習意欲'],'場所':['行動力','適応力','フットワーク','視野の広さ'],'人':['共感力','傾聴','チームワーク','ホスピタリティ'],'概念':['洞察力','構造化','戦略思考','本質思考']};
+
+  document.getElementById('rep-strength').textContent = strengthMap[top1] || '多面的な知性';
+  document.getElementById('rep-role').textContent = roleMap[top1] || '総合職';
+  document.getElementById('rep-tendency').textContent = `あなたの好きは「${top1}」を中心として${top2 ? `「${top2}」にも広がり、` : ''}幅広い関心を持っています。特に「${topItems.join('」「')}」への関心が強く（好き度上位3件）、${avg >= 4 ? 'どれも深く情熱的に好きになる傾向がある' : '広く浅く楽しむことも得意な'}ようです。`;
+  document.getElementById('rep-env').textContent = envMap[top1] || '多様なプロジェクトに携わる環境';
+  document.getElementById('rep-pr').textContent = prMap[top1] || '好奇心と行動力の組み合わせ';
+
+  const kws = [...(kwBase[top1] || []), ...((kwBase[top2] || []).slice(0,2))];
+  document.getElementById('rep-keywords').innerHTML = kws.map(k=>`<span class="kw">${k}</span>`).join('');
+
+  document.getElementById('rep-copy').value = `【自己PR】
+私は「${topItems.slice(0,2).join('」や「')}」への強い関心を持ち、${(prMap[top1]||'好奇心と行動力').replace(/「/g,'').replace(/」/g,'')}を強みとしています。
+特に${top1}に関する経験を通じて${(strengthMap[top1]||'多面的な知性')}を磨いてきました。
+貴社においては${(envMap[top1]||'多様な環境')}を活かし、${(roleMap[top1]||'総合職')}として貢献できると考えています。`;
+}
+
+function copyReport() {
+  navigator.clipboard.writeText(document.getElementById('rep-copy').value).then(() => showToast('コピーしました'));
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function updateAll() {
+  document.getElementById('list-count').textContent = data.length;
+  renderRecent();
+  renderList();
+  renderWorld();
+  renderReport();
+}
+
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'world') renderWorld();
+  if (id === 'report') renderReport();
+}
+
+document.getElementById('inp-like').addEventListener('input', function() {
+  document.getElementById('like-val').textContent = this.value + ' / 5';
+});
+
+load();
+updateAll();
+</script>
+</body>
+</html>
